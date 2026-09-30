@@ -33,6 +33,7 @@ e2e/        pruebas de Playwright
 - **Respaldo.** El JSON lleva `schemaVersion`. Se valida con Zod antes de restaurar y la restauración reemplaza los datos en una sola transacción.
 - **CSV.** Lleva BOM UTF-8 y usa punto y coma cuando el formato regional usa coma decimal, para que Excel en español lo abra bien.
 - **Moneda y decimales.** Se eligen al empezar y se bloquean cuando ya hay movimientos.
+- **Pagos fijos.** Facturas, arriendo y cuotas mensuales. Pagar uno crea un gasto normal enlazado al pago fijo y al mes que cubre, así los totales siguen saliendo solo de los movimientos. El estado de cada mes se calcula en `src/domain/commitments.ts`.
 
 La interfaz nunca accede a IndexedDB directamente, siempre pasa por `src/data/repo.ts`. Si en el futuro se agrega sincronización, se cambia esa capa.
 
