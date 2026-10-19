@@ -2,6 +2,12 @@
 
 Todas las versiones relevantes de MyBill se registran en este archivo. El proyecto sigue Versionado Semántico.
 
+## [0.1.2] - 2026-10-18
+
+### Corregido
+
+- El botón de agregar movimiento queda alineado con la barra de navegación inferior en pantallas de 448 a 767 px.
+
 ## [0.1.1] - 2026-09-29
 
 ### Corregido

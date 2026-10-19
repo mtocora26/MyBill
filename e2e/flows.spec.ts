@@ -72,6 +72,18 @@ test('inicio no se desborda en pantallas estrechas', async ({ page }) => {
   expect(overflow, JSON.stringify(overflow, null, 2)).toMatchObject({ clientWidth: 320, scrollWidth: 320, elements: [] })
 })
 
+test('el botón de agregar queda alineado con la barra inferior', async ({ page }) => {
+  await onboard(page)
+  await addMovement(page, { type: 'Gasto', amount: '45000', category: 'Comida' })
+  for (const width of [360, 600]) {
+    await page.setViewportSize({ width, height: 800 })
+    await page.goto('/')
+    const fab = await page.getByRole('link', { name: 'Nuevo movimiento' }).boundingBox()
+    const nav = await page.getByRole('navigation', { name: 'Principal' }).locator('div').first().boundingBox()
+    expect(fab && nav && Math.abs(fab.x + fab.width + 16 - (nav.x + nav.width)) <= 1, `ancho ${width}`).toBe(true)
+  }
+})
+
 test('reportes muestran totales y gráficas con tabla accesible', async ({ page }) => {
   await onboard(page)
   await addMovement(page, { type: 'Ingreso', amount: '2000000', category: 'Salario' })

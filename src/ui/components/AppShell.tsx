@@ -83,13 +83,17 @@ export function AppShell({ children }: { children: ReactNode }) {
       </div>
 
       {!inForm && (
-        <Link
-          to="/movimientos/nuevo"
-          className="fixed right-4 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 grid size-14 place-items-center rounded-2xl bg-brand-strong text-white shadow-lg shadow-brand/30 transition-transform active:scale-95 md:hidden"
-          aria-label="Nuevo movimiento"
-        >
-          <Plus className="size-7" aria-hidden="true" />
-        </Link>
+        <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 md:hidden">
+          <div className="mx-auto flex max-w-md justify-end px-4">
+            <Link
+              to="/movimientos/nuevo"
+              className="pointer-events-auto grid size-14 place-items-center rounded-2xl bg-brand-strong text-white shadow-lg shadow-brand/30 transition-transform active:scale-95"
+              aria-label="Nuevo movimiento"
+            >
+              <Plus className="size-7" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
       )}
 
       <nav
