@@ -53,7 +53,7 @@ export function CategoryBars({ title, subtitle, type, rows, categories, max = 7,
                   <CategoryIcon icon={r.categoryId === OTHER ? 'package' : (cat?.icon ?? 'tag')} className="size-4" />
                 </span>
                 <span className="min-w-0 flex-1 truncate text-sm font-medium">{nameOf(r.categoryId)}</span>
-                <span className="tabular text-sm font-semibold">{money(r.totalMinor)}</span>
+                <span className="tabular min-w-0 max-w-24 truncate text-sm font-semibold">{money(r.totalMinor)}</span>
                 <span className="tabular w-10 text-right text-xs text-muted">{pct.format(r.share)}</span>
               </div>
               <div className="mt-1.5 ml-11 h-2 rounded-full bg-surface-2" aria-hidden="true">
@@ -70,7 +70,7 @@ export function CategoryBars({ title, subtitle, type, rows, categories, max = 7,
                 <button
                   type="button"
                   onClick={() => onSelect(r.categoryId)}
-                  className="-m-1.5 block w-[calc(100%+0.75rem)] rounded-xl p-1.5 text-left hover:bg-surface-2"
+                  className="-m-1.5 block w-[calc(100%+0.75rem)] min-w-0 rounded-xl p-1.5 text-left hover:bg-surface-2"
                   aria-label={`${nameOf(r.categoryId)}: ${money(r.totalMinor)}, ${pct.format(r.share)}. Ver movimientos`}
                 >
                   {content}

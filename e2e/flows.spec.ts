@@ -53,6 +53,25 @@ test('valida el formulario', async ({ page }) => {
   await expect(page.getByRole('alert')).toContainText('Elige una categoría')
 })
 
+test('inicio no se desborda en pantallas estrechas', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 })
+  await onboard(page)
+  await addMovement(page, { type: 'Ingreso', amount: '9007199254740991', category: 'Salario' })
+  await addMovement(page, { type: 'Gasto', amount: '45000', category: 'Comida', note: 'Almuerzo' })
+  await page.goto('/')
+
+  const overflow = await page.evaluate(() => ({
+    clientWidth: document.documentElement.clientWidth,
+    scrollWidth: document.documentElement.scrollWidth,
+    elements: [...document.querySelectorAll<HTMLElement>('body *')]
+      .filter((element) => element.getBoundingClientRect().right > document.documentElement.clientWidth + 1)
+      .map((element) => `${element.tagName.toLowerCase()}.${element.className}`)
+      .slice(0, 10),
+  }))
+
+  expect(overflow, JSON.stringify(overflow, null, 2)).toMatchObject({ clientWidth: 320, scrollWidth: 320, elements: [] })
+})
+
 test('reportes muestran totales y gráficas con tabla accesible', async ({ page }) => {
   await onboard(page)
   await addMovement(page, { type: 'Ingreso', amount: '2000000', category: 'Salario' })

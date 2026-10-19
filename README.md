@@ -18,6 +18,16 @@ La primera vez que ejecutes las pruebas de extremo a extremo instala el navegado
 
 El modo sin conexión solo funciona con `npm run build` y `npm run preview`, o en producción. En `npm run dev` el service worker no está activo.
 
+## Versiones
+
+La versión visible en Ajustes se toma de `package.json` y sigue SemVer (`MAJOR.MINOR.PATCH`):
+
+- `PATCH` para correcciones compatibles.
+- `MINOR` para funcionalidades nuevas compatibles.
+- `MAJOR` para cambios incompatibles o migraciones importantes.
+
+Cada entrega se anota en `CHANGELOG.md` y mantiene sincronizados `package.json` y `package-lock.json`.
+
 ## Arquitectura
 
 ```

@@ -133,7 +133,7 @@ export function Home({ movements, categories, commitments }: { movements: Moveme
         </Link>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
         {s.expenseMinor > 0 ? (
           <CategoryBars
             title="¿En qué se va tu dinero?"
