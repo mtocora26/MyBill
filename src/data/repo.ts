@@ -1,7 +1,7 @@
 import { DEFAULT_CATEGORIES } from '../domain/defaults'
 import type { BackupFile } from '../domain/backup'
 import { defaultDecimalsFor } from '../domain/money'
-import type { AppSettings, Category, Commitment, ISODate, Movement, MovementType } from '../domain/types'
+import type { AppSettings, Category, Commitment, Debt, DebtDirection, ISODate, Movement, MovementType } from '../domain/types'
 import { db as defaultDb, type MyBillDB, type SettingsRow } from './db'
 
 export interface MovementInput {
@@ -22,6 +22,15 @@ export interface CommitmentInput {
   dueDay: number
   startMonth: string
   installments: number | null
+}
+
+export interface DebtInput {
+  direction: DebtDirection
+  person: string
+  note: string
+  amountMinor: number
+  date: ISODate
+  dueDate: ISODate | null
 }
 
 export function newId(): string {
@@ -168,25 +177,77 @@ export function createRepo(db: MyBillDB = defaultDb) {
     })
   }
 
+  function validateDebt(input: DebtInput) {
+    if (!input.person.trim()) throw new Error('Escribe el nombre de la persona o entidad.')
+    if (!Number.isSafeInteger(input.amountMinor) || input.amountMinor <= 0) throw new Error('El importe debe ser mayor que cero.')
+    if (input.dueDate !== null && input.dueDate < input.date) throw new Error('La fecha límite no puede ser anterior a la fecha de la deuda.')
+  }
+
+  async function addDebt(input: DebtInput): Promise<Debt> {
+    validateDebt(input)
+    const now = new Date().toISOString()
+    const debt: Debt = { id: newId(), ...input, person: input.person.trim(), note: input.note.trim(), payments: [], createdAt: now, updatedAt: now }
+    await db.debts.add(debt)
+    return debt
+  }
+
+  async function updateDebt(id: string, input: DebtInput): Promise<void> {
+    validateDebt(input)
+    await db.transaction('rw', db.debts, async () => {
+      const d = await db.debts.get(id)
+      if (!d) throw new Error('La deuda ya no existe.')
+      const paid = d.payments.reduce((sum, p) => sum + p.amountMinor, 0)
+      if (input.amountMinor < paid) throw new Error('El total no puede ser menor que lo ya abonado.')
+      await db.debts.update(id, { ...input, person: input.person.trim(), note: input.note.trim(), updatedAt: new Date().toISOString() })
+    })
+  }
+
+  async function deleteDebt(id: string): Promise<void> {
+    await db.debts.delete(id)
+  }
+
+  async function addDebtPayment(id: string, payment: { amountMinor: number; date: ISODate; note: string }): Promise<void> {
+    if (!Number.isSafeInteger(payment.amountMinor) || payment.amountMinor <= 0) throw new Error('El abono debe ser mayor que cero.')
+    await db.transaction('rw', db.debts, async () => {
+      const d = await db.debts.get(id)
+      if (!d) throw new Error('La deuda ya no existe.')
+      const left = d.amountMinor - d.payments.reduce((sum, p) => sum + p.amountMinor, 0)
+      if (payment.amountMinor > left) throw new Error('El abono es mayor que lo que falta por pagar.')
+      const next = { id: newId(), ...payment, note: payment.note.trim() }
+      await db.debts.update(id, { payments: [...d.payments, next], updatedAt: new Date().toISOString() })
+    })
+  }
+
+  async function deleteDebtPayment(id: string, paymentId: string): Promise<void> {
+    await db.transaction('rw', db.debts, async () => {
+      const d = await db.debts.get(id)
+      if (!d) return
+      await db.debts.update(id, { payments: d.payments.filter((p) => p.id !== paymentId), updatedAt: new Date().toISOString() })
+    })
+  }
+
   async function exportAll() {
-    const [settings, categories, movements, commitments] = await Promise.all([
+    const [settings, categories, movements, commitments, debts] = await Promise.all([
       getSettings(),
       db.categories.toArray(),
       db.movements.toArray(),
       db.commitments.toArray(),
+      db.debts.toArray(),
     ])
-    return { settings, categories, movements, commitments }
+    return { settings, categories, movements, commitments, debts }
   }
 
   /** Reemplaza todos los datos por los del respaldo. Si algo falla, no cambia nada. */
   async function restoreBackup(backup: BackupFile): Promise<void> {
-    await db.transaction('rw', [db.movements, db.categories, db.settings, db.commitments], async () => {
+    await db.transaction('rw', [db.movements, db.categories, db.settings, db.commitments, db.debts], async () => {
       const current = await getSettings()
       await db.movements.clear()
       await db.categories.clear()
       await db.commitments.clear()
+      await db.debts.clear()
       await db.categories.bulkAdd(backup.categories)
       await db.commitments.bulkAdd(backup.commitments)
+      await db.debts.bulkAdd(backup.debts)
       await db.movements.bulkAdd(backup.movements)
       await db.settings.put({ ...current, ...backup.settings, onboarded: true, key: 'app' })
     })
@@ -205,6 +266,11 @@ export function createRepo(db: MyBillDB = defaultDb) {
     updateCommitment,
     setCommitmentArchived,
     setMonthSkipped,
+    addDebt,
+    updateDebt,
+    deleteDebt,
+    addDebtPayment,
+    deleteDebtPayment,
     exportAll,
     restoreBackup,
   }

@@ -1,5 +1,5 @@
 import Dexie, { type EntityTable } from 'dexie'
-import type { AppSettings, Category, Commitment, Movement } from '../domain/types'
+import type { AppSettings, Category, Commitment, Debt, Movement } from '../domain/types'
 
 export interface SettingsRow extends AppSettings {
   key: 'app'
@@ -10,6 +10,7 @@ export class MyBillDB extends Dexie {
   categories!: EntityTable<Category, 'id'>
   settings!: EntityTable<SettingsRow, 'key'>
   commitments!: EntityTable<Commitment, 'id'>
+  debts!: EntityTable<Debt, 'id'>
 
   constructor(name = 'mybill') {
     super(name)
@@ -22,6 +23,10 @@ export class MyBillDB extends Dexie {
     this.version(2).stores({
       movements: 'id, date, type, categoryId, commitmentId',
       commitments: 'id',
+    })
+    // v3: deudas y prestamos con abonos libres.
+    this.version(3).stores({
+      debts: 'id, direction',
     })
   }
 }

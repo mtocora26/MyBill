@@ -1,9 +1,9 @@
 import { z } from 'zod'
 import { isValidISODate } from './dates'
-import type { AppSettings, Category, Commitment, Movement } from './types'
+import type { AppSettings, Category, Commitment, Debt, Movement } from './types'
 
 export const BACKUP_APP_ID = 'MyBill'
-export const BACKUP_SCHEMA_VERSION = 2
+export const BACKUP_SCHEMA_VERSION = 3
 
 const isoDate = z.string().refine(isValidISODate, 'Fecha inválida (se espera AAAA-MM-DD)')
 const monthKey = z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/)
@@ -36,6 +36,26 @@ const commitmentSchema = z.object({
   updatedAt: z.string(),
 })
 
+const debtSchema = z.object({
+  id: z.string().min(1),
+  direction: z.enum(['owed-to-me', 'i-owe']),
+  person: z.string().min(1).max(60),
+  note: z.string().max(500),
+  amountMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+  date: isoDate,
+  dueDate: isoDate.nullable(),
+  payments: z.array(
+    z.object({
+      id: z.string().min(1),
+      date: isoDate,
+      amountMinor: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
+      note: z.string().max(500),
+    }),
+  ),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
+
 const categorySchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1).max(40),
@@ -59,6 +79,7 @@ export const backupSchema = z.object({
   categories: z.array(categorySchema),
   movements: z.array(movementSchema),
   commitments: z.array(commitmentSchema),
+  debts: z.array(debtSchema),
 })
 
 export type BackupFile = z.infer<typeof backupSchema>
@@ -69,6 +90,7 @@ export function buildBackup(
   movements: Movement[],
   commitments: Commitment[] = [],
   now = new Date(),
+  debts: Debt[] = [],
 ): BackupFile {
   return {
     app: BACKUP_APP_ID,
@@ -78,6 +100,7 @@ export function buildBackup(
     categories,
     movements,
     commitments,
+    debts,
   }
 }
 
@@ -86,6 +109,7 @@ export interface BackupSummary {
   movementCount: number
   categoryCount: number
   commitmentCount: number
+  debtCount: number
   firstDate: string | null
   lastDate: string | null
   currency: string
@@ -100,6 +124,8 @@ function migrate(raw: Record<string, unknown>): Record<string, unknown> {
   let out = raw
   // v1 -> v2: se agregan los pagos fijos.
   if (out.schemaVersion === 1) out = { ...out, schemaVersion: 2, commitments: [] }
+  // v2 -> v3: se agregan las deudas.
+  if (out.schemaVersion === 2) out = { ...out, schemaVersion: 3, debts: [] }
   return out
 }
 
@@ -107,6 +133,7 @@ function describePath(path: PropertyKey[]): string {
   const [head, index, field] = path
   if (head === 'movements' && typeof index === 'number') return `movimiento ${index + 1}${field ? `, campo "${String(field)}"` : ''}`
   if (head === 'commitments' && typeof index === 'number') return `pago fijo ${index + 1}${field ? `, campo "${String(field)}"` : ''}`
+  if (head === 'debts' && typeof index === 'number') return `deuda ${index + 1}${field ? `, campo "${String(field)}"` : ''}`
   if (head === 'categories' && typeof index === 'number') return `categoría ${index + 1}${field ? `, campo "${String(field)}"` : ''}`
   return path.map(String).join('.') || 'archivo'
 }
@@ -157,6 +184,14 @@ export function parseBackup(text: string): ParseBackupResult {
     return { ok: false, error: 'Un movimiento hace referencia a un pago fijo que no existe en el respaldo.' }
   }
 
+  const debtIds = new Set<string>()
+  for (const d of backup.debts) {
+    if (debtIds.has(d.id)) return { ok: false, error: 'Hay deudas duplicadas en el respaldo.' }
+    debtIds.add(d.id)
+    const paid = d.payments.reduce((sum, p) => sum + p.amountMinor, 0)
+    if (!Number.isSafeInteger(paid)) return { ok: false, error: `Los abonos de la deuda con "${d.person}" no son válidos.` }
+  }
+
   const dates = backup.movements.map((m) => m.date).sort()
   return {
     ok: true,
@@ -166,6 +201,7 @@ export function parseBackup(text: string): ParseBackupResult {
       movementCount: backup.movements.length,
       categoryCount: backup.categories.length,
       commitmentCount: backup.commitments.length,
+      debtCount: backup.debts.length,
       firstDate: dates[0] ?? null,
       lastDate: dates[dates.length - 1] ?? null,
       currency: backup.settings.currency,

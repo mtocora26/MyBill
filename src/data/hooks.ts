@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import type { AppSettings, Category, Commitment, Movement } from '../domain/types'
+import type { AppSettings, Category, Commitment, Debt, Movement } from '../domain/types'
 import { db } from './db'
 import { DEFAULT_SETTINGS } from './repo'
 
@@ -30,4 +30,12 @@ export function useCommitments(): Commitment[] | undefined {
 
 export function useCommitment(id: string | undefined): Commitment | null | undefined {
   return useLiveQuery(async () => (id ? ((await db.commitments.get(id)) ?? null) : null), [id])
+}
+
+export function useDebts(): Debt[] | undefined {
+  return useLiveQuery(() => db.debts.toArray())
+}
+
+export function useDebt(id: string | undefined): Debt | null | undefined {
+  return useLiveQuery(async () => (id ? ((await db.debts.get(id)) ?? null) : null), [id])
 }

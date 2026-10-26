@@ -265,9 +265,9 @@ function BackupSection({ movementCount }: { movementCount: number }) {
   const shareable = canShareFiles()
 
   async function makeBackup(mode: 'download' | 'share') {
-    const { settings: s, categories, movements, commitments } = await repo.exportAll()
+    const { settings: s, categories, movements, commitments, debts } = await repo.exportAll()
     const now = new Date()
-    const json = JSON.stringify(buildBackup(s, categories, movements, commitments, now), null, 2)
+    const json = JSON.stringify(buildBackup(s, categories, movements, commitments, now, debts), null, 2)
     const name = backupFileName(now)
     try {
       if (mode === 'share') {
@@ -401,6 +401,8 @@ function BackupSection({ movementCount }: { movementCount: number }) {
               <dd className="text-right font-medium text-ink">{pending.summary.categoryCount}</dd>
               <dt className="text-muted">Pagos fijos</dt>
               <dd className="text-right font-medium text-ink">{pending.summary.commitmentCount}</dd>
+              <dt className="text-muted">Deudas</dt>
+              <dd className="text-right font-medium text-ink">{pending.summary.debtCount}</dd>
               {pending.summary.firstDate && pending.summary.lastDate && (
                 <>
                   <dt className="text-muted">Periodo</dt>
