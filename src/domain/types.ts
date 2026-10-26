@@ -40,6 +40,35 @@ export interface Commitment {
   updatedAt: string
 }
 
+/** "owed-to-me": me deben. "i-owe": yo debo. */
+export type DebtDirection = 'owed-to-me' | 'i-owe'
+
+export interface DebtPayment {
+  id: string
+  date: ISODate
+  amountMinor: number
+  note: string
+}
+
+/** Deuda o prestamo sin cuotas fijas: se salda con abonos libres. */
+export interface Debt {
+  id: string
+  direction: DebtDirection
+  /** Persona o entidad con quien se tiene la deuda. */
+  person: string
+  /** Detalle: que se presto o que se debe. */
+  note: string
+  /** Total original en unidades menores. */
+  amountMinor: number
+  /** Fecha en que nacio la deuda. */
+  date: ISODate
+  /** Fecha limite opcional. */
+  dueDate: ISODate | null
+  payments: DebtPayment[]
+  createdAt: string
+  updatedAt: string
+}
+
 export interface Category {
   id: string
   name: string

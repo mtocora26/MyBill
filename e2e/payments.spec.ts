@@ -79,6 +79,6 @@ test('los pagos fijos viajan en el respaldo', async ({ page }) => {
   await page.goto('/ajustes')
   const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Crear respaldo' }).click()])
   const json = JSON.parse(await (await import('node:fs/promises')).readFile((await dl.path())!, 'utf8'))
-  expect(json.schemaVersion).toBe(2)
+  expect(json.schemaVersion).toBe(3)
   expect(json.commitments[0].name).toBe('Internet')
 })

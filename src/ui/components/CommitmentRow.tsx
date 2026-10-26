@@ -61,7 +61,7 @@ export function CommitmentRowView({ row, category, today, compact = false }: { r
 
   const main = (
     <>
-      <span className={`relative grid size-10 shrink-0 place-items-center rounded-xl ${style.box}`}>
+      <span className={`relative grid size-9 shrink-0 sm:size-10 place-items-center rounded-xl ${style.box}`}>
         <CategoryIcon icon={category?.icon ?? 'receipt'} />
         <span className="absolute -right-1 -bottom-1 grid size-4.5 place-items-center rounded-full bg-surface">
           <StatusIcon className={`size-3.5 ${style.text}`} aria-hidden="true" />
@@ -70,9 +70,10 @@ export function CommitmentRowView({ row, category, today, compact = false }: { r
       <span className="min-w-0 flex-1">
         <span className="flex items-baseline justify-between gap-2">
           <span className={`truncate text-[15px] font-medium ${row.status === 'skipped' ? 'text-muted line-through' : ''}`}>{c.name}</span>
-          <span className={`tabular shrink-0 text-[15px] font-semibold ${row.status === 'skipped' ? 'text-muted' : ''}`}>{formatMoney(amount, settings)}</span>
+          <span className={`tabular hidden shrink-0 text-[15px] font-semibold sm:inline ${row.status === 'skipped' ? 'text-muted' : ''}`}>{formatMoney(amount, settings)}</span>
         </span>
         <span className="block text-sm leading-snug">
+          <span className={`tabular font-semibold sm:hidden ${row.status === 'skipped' ? 'text-muted' : ''}`}>{formatMoney(amount, settings)} · </span>
           <span className={style.text}>{statusText(row, today, settings.locale)}</span>
           {row.installment && (
             <span className="text-muted">
@@ -87,16 +88,16 @@ export function CommitmentRowView({ row, category, today, compact = false }: { r
 
   return (
     <div className="rounded-2xl transition-colors hover:bg-surface-2/60">
-      <div className="flex items-center gap-3 px-2.5 py-2.5 sm:px-3">
+      <div className="flex items-center gap-2 px-2 py-2 sm:gap-3 sm:px-3 sm:py-2.5">
         {row.payment ? (
-          <Link to={`/movimientos/${row.payment.id}`} className="flex min-w-0 flex-1 items-center gap-3" aria-label={`${c.name}, pagado. Ver pago`}>
+          <Link to={`/movimientos/${row.payment.id}`} className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3" aria-label={`${c.name}, pagado. Ver pago`}>
             {main}
           </Link>
         ) : (
-          <div className="flex min-w-0 flex-1 items-center gap-3">{main}</div>
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 sm:gap-3">{main}</div>
         )}
         {unpaid && (
-          <Link to={payHref(row)} className="btn-primary min-h-9 shrink-0 px-3 text-sm" aria-label={`Pagar ${c.name}`}>
+          <Link to={payHref(row)} className="btn-primary min-h-8 shrink-0 px-3 text-sm sm:min-h-9" aria-label={`Pagar ${c.name}`}>
             Pagar
           </Link>
         )}
@@ -106,7 +107,7 @@ export function CommitmentRowView({ row, category, today, compact = false }: { r
             onClick={() => setMenu((v) => !v)}
             aria-expanded={menu}
             aria-label={`Más opciones para ${c.name}`}
-            className="-ml-2 grid size-8 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
+            className="grid size-8 shrink-0 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
           >
             <EllipsisVertical className="size-4.5" aria-hidden="true" />
           </button>

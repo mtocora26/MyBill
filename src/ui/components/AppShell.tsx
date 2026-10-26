@@ -1,4 +1,4 @@
-import { CalendarCheck, ChartColumnBig, LayoutDashboard, List, Plus, Settings, WifiOff } from 'lucide-react'
+import { CalendarCheck, ChartColumnBig, HandCoins, LayoutDashboard, List, Plus, Settings, WifiOff } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 
@@ -6,6 +6,7 @@ const NAV = [
   { to: '/', label: 'Inicio', icon: LayoutDashboard, end: true },
   { to: '/movimientos', label: 'Movimientos', icon: List, end: true },
   { to: '/pagos', label: 'Pagos', icon: CalendarCheck, end: true },
+  { to: '/deudas', label: 'Deudas', icon: HandCoins, end: false },
   { to: '/reportes', label: 'Reportes', icon: ChartColumnBig, end: false },
   { to: '/ajustes', label: 'Ajustes', icon: Settings, end: false },
 ]
@@ -37,7 +38,9 @@ function Logo() {
 export function AppShell({ children }: { children: ReactNode }) {
   const online = useOnline()
   const { pathname } = useLocation()
-  const inForm = pathname.startsWith('/movimientos/') || pathname.startsWith('/pagos/')
+  const inForm = pathname.startsWith('/movimientos/') || pathname.startsWith('/pagos/') || pathname.startsWith('/deudas/')
+
+  const hasOwnAdd = pathname === '/pagos' || pathname === '/deudas'
 
   return (
     <div className="min-h-dvh md:flex">
@@ -82,7 +85,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <main className={`mx-auto w-full max-w-5xl px-4 pt-4 md:px-8 md:pt-8 md:pb-12 ${inForm ? 'pb-4' : 'pb-32'}`}>{children}</main>
       </div>
 
-      {!inForm && (
+      {!inForm && !hasOwnAdd && (
         <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5.25rem+env(safe-area-inset-bottom))] z-30 md:hidden">
           <div className="mx-auto flex max-w-md justify-end px-4">
             <Link
@@ -101,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         className="safe-bottom fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 backdrop-blur md:hidden"
         aria-label="Principal"
       >
-        <div className="mx-auto grid max-w-md grid-cols-5">
+        <div className="mx-auto grid max-w-md grid-cols-6">
           {NAV.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}

@@ -6,7 +6,7 @@ import { commitmentsForMonth, summarizeCommitments, type CommitmentRow, type Com
 import { addMonths, monthKeyOf, monthLabel, todayISO } from '../../domain/dates'
 import { formatMoney } from '../../domain/money'
 import type { Category, Commitment, Movement } from '../../domain/types'
-import { Card, PageHeader } from '../components/Card'
+import { Card, HeaderAddLink, PageHeader } from '../components/Card'
 import { CommitmentRowView } from '../components/CommitmentRow'
 import { EmptyState } from '../components/EmptyState'
 import { CategoryIcon } from '../icons'
@@ -25,13 +25,36 @@ export function CommitmentsSummary({ rows, month, compact = false }: { rows: Com
   const s = summarizeCommitments(rows)
   const money = (m: number) => formatMoney(m, settings)
   const done = s.total > 0 && s.paid === s.total
+  if (compact) {
+    return (
+      <div>
+        <div className="flex items-baseline justify-between gap-3">
+          <p className="text-sm text-ink-2">
+            <span className="text-lg font-bold text-ink">{s.paid}</span> de {s.total} {s.total === 1 ? 'pagado' : 'pagados'}
+          </p>
+          <p className="tabular truncate text-sm text-ink-2">
+            {done ? 'Todo pagado' : <>Falta <span className="font-semibold text-ink">{money(s.pendingMinor)}</span></>}
+          </p>
+        </div>
+        <div className="mt-2 h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuemin={0} aria-valuemax={s.total} aria-valuenow={s.paid} aria-label="Pagos realizados">
+          <div className="h-full rounded-full bg-brand transition-[width]" style={{ width: `${s.total ? (s.paid / s.total) * 100 : 0}%` }} />
+        </div>
+        {s.overdue > 0 && (
+          <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-danger">
+            <CircleAlert className="size-4 shrink-0" aria-hidden="true" />
+            {s.overdue === 1 ? '1 pago vencido' : `${s.overdue} pagos vencidos`}
+          </p>
+        )}
+      </div>
+    )
+  }
   return (
     <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm text-ink-2">
           <span className="text-2xl font-bold text-ink">{s.paid}</span> de {s.total} {s.total === 1 ? 'pagado' : 'pagados'}
         </p>
-        {!compact && <p className="text-sm text-muted">{monthLabel(month, settings.locale)}</p>}
+        <p className="text-sm text-muted">{monthLabel(month, settings.locale)}</p>
       </div>
       <div
         className="mt-3 h-2.5 overflow-hidden rounded-full bg-surface-2"
@@ -78,7 +101,7 @@ export function CommitmentsPage({ commitments, movements, categories }: { commit
 
   return (
     <div>
-      <PageHeader title="Pagos del mes" subtitle="Facturas, arriendo y cuotas que pagas cada mes" actions={active.length > 0 ? newButton : undefined} />
+      <PageHeader title="Pagos del mes" subtitle="Facturas, arriendo y cuotas que pagas cada mes" actions={active.length > 0 ? <HeaderAddLink to="/pagos/nuevo" label="Nuevo pago fijo" /> : undefined} />
 
       {active.length === 0 && archived.length === 0 ? (
         <Card>

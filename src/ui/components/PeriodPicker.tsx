@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { currentMonthPeriod, monthKeyOf, periodLabel, shiftPeriod, todayISO, type Period } from '../../domain/dates'
+import { currentMonthPeriod, monthKeyOf, monthLabel, periodLabel, shiftPeriod, todayISO, type Period } from '../../domain/dates'
 import { useAppSettings } from '../settings-context'
 
 const KINDS: { kind: Period['kind']; label: string }[] = [
@@ -27,7 +27,7 @@ export function PeriodPicker({ value, onChange, allowAll = true }: { value: Peri
   const { locale } = useAppSettings()
   const kinds = allowAll ? KINDS : KINDS.filter((k) => k.kind !== 'all')
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex items-center justify-between gap-2 sm:justify-start">
       <div className="inline-flex rounded-full border border-line bg-surface p-1" role="group" aria-label="Tipo de periodo">
         {kinds.map((k) => (
           <button
@@ -35,7 +35,7 @@ export function PeriodPicker({ value, onChange, allowAll = true }: { value: Peri
             type="button"
             aria-pressed={value.kind === k.kind}
             onClick={() => onChange(switchKind(value, k.kind))}
-            className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`rounded-full px-2.5 py-1.5 text-sm font-medium sm:px-3 transition-colors ${
               value.kind === k.kind ? 'bg-brand text-white' : 'text-ink-2 hover:text-ink'
             }`}
           >
@@ -48,19 +48,20 @@ export function PeriodPicker({ value, onChange, allowAll = true }: { value: Peri
           <button
             type="button"
             onClick={() => onChange(shiftPeriod(value, -1))}
-            className="grid size-9 place-items-center rounded-full text-ink-2 hover:bg-surface-2 hover:text-ink"
+            className="grid size-9 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-2 hover:text-ink max-sm:size-8"
             aria-label="Periodo anterior"
           >
             <ChevronLeft className="size-5" aria-hidden="true" />
           </button>
-          <span className="min-w-32 px-1 text-center text-sm font-semibold" aria-live="polite">
-            {periodLabel(value, locale)}
+          <span className="px-1 text-center text-sm font-semibold sm:min-w-32" aria-live="polite">
+            <span className="sm:hidden">{value.kind === 'month' ? `${monthLabel(value.month, locale, 'short')} ${value.month.slice(0, 4)}` : periodLabel(value, locale)}</span>
+            <span className="hidden sm:inline">{periodLabel(value, locale)}</span>
           </span>
           <button
             type="button"
             onClick={() => onChange(shiftPeriod(value, 1))}
             disabled={isCurrentOrFuture(value)}
-            className="grid size-9 place-items-center rounded-full text-ink-2 hover:bg-surface-2 hover:text-ink disabled:opacity-30 disabled:hover:bg-transparent"
+            className="grid size-9 shrink-0 place-items-center rounded-full text-ink-2 hover:bg-surface-2 hover:text-ink max-sm:size-8 disabled:opacity-30 disabled:hover:bg-transparent"
             aria-label="Periodo siguiente"
           >
             <ChevronRight className="size-5" aria-hidden="true" />

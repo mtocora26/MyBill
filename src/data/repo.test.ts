@@ -119,4 +119,17 @@ describe('pagos fijos', () => {
     await repo.restoreBackup(buildBackup(data.settings, data.categories, data.movements, data.commitments))
     expect(await db.commitments.get(c.id)).toBeTruthy()
   })
+
+  it('registra abonos libres, no permite pasarse del total y se respalda', async () => {
+    const d = await repo.addDebt({ direction: 'owed-to-me', person: ' Carlos ', note: '', amountMinor: 100000, date: '2026-09-01', dueDate: null })
+    expect(d.person).toBe('Carlos')
+    await repo.addDebtPayment(d.id, { amountMinor: 40000, date: '2026-09-10', note: '' })
+    await expect(repo.addDebtPayment(d.id, { amountMinor: 60001, date: '2026-09-11', note: '' })).rejects.toThrow('mayor')
+    await expect(repo.updateDebt(d.id, { direction: 'owed-to-me', person: 'Carlos', note: '', amountMinor: 30000, date: '2026-09-01', dueDate: null })).rejects.toThrow('abonado')
+
+    const data = await repo.exportAll()
+    await db.debts.clear()
+    await repo.restoreBackup(buildBackup(data.settings, data.categories, data.movements, data.commitments, new Date(), data.debts))
+    expect((await db.debts.get(d.id))?.payments).toHaveLength(1)
+  })
 })
